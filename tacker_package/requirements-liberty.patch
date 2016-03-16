@@ -1,0 +1,1238 @@
+From 6fb8c227e5549bf53209fa37eeb60579e0a340f9 Mon Sep 17 00:00:00 2001
+From: Sripriya <sseetha@brocade.com>
+Date: Thu, 8 Oct 2015 16:12:53 -0700
+Subject: [PATCH] Cleanup requirements file
+
+Remove unused packages from requirements file
+
+Change-Id: I57e908d6d6c69e9eb02cea2ba27402a6694cc349
+---
+ requirements.txt | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/requirements.txt b/requirements.txt
+index 3f7d1ac..a87b01b 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -11,8 +11,6 @@ greenlet>=0.3.2
+ httplib2>=0.7.5
+ requests>=2.2.0,!=2.4.0
+ iso8601>=0.1.9
+-jsonrpclib
+-Jinja2>=2.6  # BSD License (3 clause)
+ kombu>=2.5.0
+ netaddr>=0.7.12
+ #python-tackerclient>=2.3.4,<3
+-- 
+1.9.1
+
+From dc5024e232f4cfb21ed4cbd2acf10b036ce66c31 Mon Sep 17 00:00:00 2001
+From: Sripriya <sseetha@brocade.com>
+Date: Mon, 12 Oct 2015 14:01:15 -0700
+Subject: [PATCH] Preserve network interfaces order of vnfd template
+
+The Python dictionary behavior of vnfd body does not guarantee the
+network interfaces to be fetched in same order as specified in template.
+This fix uses the third party python package tosca-parser to preserve
+the order. This will ensure the interfaces come up in the same sequence
+as specified in template.
+
+Closes-Bug: #1504687
+Change-Id: Ieddd2ba16328869cef901d94bb53dc9566c250df
+---
+ requirements.txt               |  1 +
+ tacker/vm/drivers/heat/heat.py | 10 +++-------
+ 2 files changed, 4 insertions(+), 7 deletions(-)
+
+diff --git a/requirements.txt b/requirements.txt
+index a87b01b..3bf7a1e 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -25,3 +25,4 @@ oslo.config>=1.11.0 # Apache-2.0
+ oslo.messaging!=1.17.0,!=1.17.1,>=1.16.0 # Apache-2.0
+ oslo.rootwrap>=2.0.0 # Apache-2.0
+ python-novaclient>=2.22.0
++tosca-parser>=0.1.0
+diff --git a/tacker/vm/drivers/heat/heat.py b/tacker/vm/drivers/heat/heat.py
+index 3dbe0f8..6fc3a80 100644
+--- a/tacker/vm/drivers/heat/heat.py
++++ b/tacker/vm/drivers/heat/heat.py
+@@ -1,8 +1,6 @@
+ # vim: tabstop=4 shiftwidth=4 softtabstop=4
+ #
+ # Copyright 2015 Intel Corporation.
+-# Copyright 2015 Isaku Yamahata <isaku.yamahata at intel com>
+-#                               <isaku.yamahata at gmail com>
+ # All Rights Reserved.
+ #
+ #
+@@ -17,9 +15,6 @@
+ #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ #    License for the specific language governing permissions and limitations
+ #    under the License.
+-#
+-# @author: Isaku Yamahata, Intel Corporation.
+-# shamelessly many codes are stolen from gbp simplechain_driver.py
+ 
+ import sys
+ import time
+@@ -29,6 +24,7 @@ from heatclient import client as heat_client
+ from heatclient import exc as heatException
+ from keystoneclient.v2_0 import client as ks_client
+ from oslo_config import cfg
++from toscaparser.utils import yamlparser
+ 
+ from tacker.common import log
+ from tacker.extensions import vnfm
+@@ -199,7 +195,7 @@ class DeviceHeat(abstract_driver.DeviceAbstractDriver):
+                 network_param = {
+                     'port': {'get_resource': port}
+                 }
+-            networks_list.append(network_param)
++            networks_list.append(dict(network_param))
+ 
+     @log.log
+     def create(self, plugin, context, device):
+@@ -233,7 +229,7 @@ class DeviceHeat(abstract_driver.DeviceAbstractDriver):
+             outputs_dict = {}
+             template_dict['outputs'] = outputs_dict
+ 
+-            vnfd_dict = yaml.load(vnfd_yaml)
++            vnfd_dict = yamlparser.simple_ordered_parse(vnfd_yaml)
+             LOG.debug('vnfd_dict %s', vnfd_dict)
+ 
+             if 'get_input' in vnfd_yaml:
+-- 
+1.9.1
+
+From 492eba6c4a4cfb596829b9c475aa1f77f1cd2ac3 Mon Sep 17 00:00:00 2001
+From: Sridhar Ramaswamy <srics.r@gmail.com>
+Date: Thu, 15 Oct 2015 02:47:33 +0000
+Subject: [PATCH] Cleanup Tacker docs and introduce tox doc test
+
+Deep cleaning of tacker doc/source dir by removing all references
+to Neutron, remove non-applicable doc files and various other
+fixes and references to Tacker urls. Introduce fixed up HACKING and
+CONTRIBUTING docs.
+
+Also add tox 'docs' test run and enable it by default
+
+Change-Id: I90c48eeb3724adb3de3431f1f5464c5200dad071
+---
+ CONTRIBUTING.rst                              |  16 ++
+ HACKING.rst                                   |  17 +-
+ TESTING.rst                                   |  39 ++---
+ doc/source/conf.py                            | 225 +++-----------------------
+ doc/source/devref/api_extensions.rst          |   6 +-
+ doc/source/devref/api_layer.rst               |  25 +--
+ doc/source/devref/common.rst                  |  25 ---
+ doc/source/devref/db_layer.rst                |   2 -
+ doc/source/devref/development.environment.rst |  15 +-
+ doc/source/devref/index.rst                   |  62 -------
+ doc/source/devref/plugin-api.rst              |   3 -
+ doc/source/devref/rpc_api.rst                 |   2 -
+ doc/source/index.rst                          |  70 ++++----
+ doc/source/man/neutron-server.rst             |  75 ---------
+ test-requirements.txt                         |   9 +-
+ tox.ini                                       |   7 +-
+ 16 files changed, 138 insertions(+), 460 deletions(-)
+ create mode 100644 CONTRIBUTING.rst
+ delete mode 100644 doc/source/devref/common.rst
+ delete mode 100644 doc/source/devref/db_layer.rst
+ delete mode 100644 doc/source/devref/index.rst
+ delete mode 100644 doc/source/devref/plugin-api.rst
+ delete mode 100644 doc/source/devref/rpc_api.rst
+ delete mode 100644 doc/source/man/neutron-server.rst
+
+diff --git a/CONTRIBUTING.rst b/CONTRIBUTING.rst
+new file mode 100644
+index 0000000..7cb6ef7
+--- /dev/null
++++ b/CONTRIBUTING.rst
+@@ -0,0 +1,16 @@
++If you would like to contribute to the development of OpenStack,
++you must follow the steps in this page:
++
++   http://docs.openstack.org/infra/manual/developers.html
++
++Once those steps have been completed, changes to OpenStack
++should be submitted for review via the Gerrit tool, following
++the workflow documented at:
++
++   http://docs.openstack.org/infra/manual/developers.html#development-workflow
++
++Pull requests submitted through GitHub will be ignored.
++
++Bugs should be filed on Launchpad, not GitHub:
++
++   https://bugs.launchpad.net/tacker
+diff --git a/HACKING.rst b/HACKING.rst
+index 84f6f3e..78c6aac 100644
+--- a/HACKING.rst
++++ b/HACKING.rst
+@@ -1,12 +1,12 @@
+-Neutron Style Commandments
+-=======================
++Tacker Style Commandments
++=========================
+ 
+ - Step 1: Read the OpenStack Style Commandments
+   http://docs.openstack.org/developer/hacking/
+ - Step 2: Read on
+ 
+-Neutron Specific Commandments
+---------------------------
++Tacker Specific Commandments
++----------------------------
+ 
+ - [N320] Validate that LOG messages, except debug ones, have translations
+ 
+@@ -17,12 +17,3 @@ For every new feature, unit tests should be created that both test and
+ bug that had no unit test, a new passing unit test should be added. If a
+ submitted bug fix does have a unit test, be sure to add a new one that fails
+ without the patch and passes with the patch.
+-
+-All unittest classes must ultimately inherit from testtools.TestCase. In the
+-Neutron test suite, this should be done by inheriting from
+-neutron.tests.base.BaseTestCase.
+-
+-All setUp and tearDown methods must upcall using the super() method.
+-tearDown methods should be avoided and addCleanup calls should be preferred.
+-Never manually create tempfiles. Always use the tempfile fixtures from
+-the fixture library to ensure that they are cleaned up.
+diff --git a/TESTING.rst b/TESTING.rst
+index d940126..b826d76 100644
+--- a/TESTING.rst
++++ b/TESTING.rst
+@@ -1,12 +1,12 @@
+-Testing Neutron
+-=============================================================
++Testing Tacker
++==============
+ 
+ Overview
+ --------
+ 
+ The unit tests are meant to cover as much code as possible and should
+ be executed without the service running. They are designed to test
+-the various pieces of the neutron tree to make sure any new changes
++the various pieces of the tacker tree to make sure any new changes
+ don't break existing functionality.
+ 
+ The functional tests are intended to validate actual system
+@@ -24,21 +24,6 @@ fixes that are submitted also have tests to prove that they stay
+ fixed!  In addition, before proposing for merge, all of the
+ current tests should be passing.
+ 
+-Virtual environments
+-~~~~~~~~~~~~~~~~~~~~
+-
+-Testing OpenStack projects, including Neutron, is made easier with `DevStack <https://git.openstack.org/cgit/openstack-dev/devstack>`_.
+-
+-Create a machine (such as a VM or Vagrant box) running a distribution supported
+-by DevStack and install DevStack there. For example, there is a Vagrant script
+-for DevStack at https://github.com/bcwaldon/vagrant_devstack.
+-
+- .. note::
+-
+-    If you prefer not to use DevStack, you can still check out source code on your local
+-    machine and develop from there.
+-
+-
+ Running unit tests
+ ------------------
+ 
+@@ -77,7 +62,7 @@ There are disadvantages to running Nose - the tests are run sequentially, so
+ race condition bugs will not be triggered, and the full test suite will
+ take significantly longer than tox & testr. The upside is that testr has
+ some rough edges when it comes to diagnosing errors and failures, and there is
+-no easy way to set a breakpoint in the Neutron code, and enter an
++no easy way to set a breakpoint in the Tacker code, and enter an
+ interactive debugging session while using testr.
+ 
+ .. _nose: https://nose.readthedocs.org/en/latest/index.html
+@@ -85,7 +70,7 @@ interactive debugging session while using testr.
+ With `tox`
+ ~~~~~~~~~~
+ 
+-Neutron, like other OpenStack projects, uses `tox`_ for managing the virtual
++Tacker, like other OpenStack projects, uses `tox`_ for managing the virtual
+ environments for running test cases. It uses `Testr`_ for managing the running
+ of the test cases.
+ 
+@@ -96,7 +81,7 @@ Testr handles the parallel execution of series of test cases as well as
+ the tracking of long-running tests and other things.
+ 
+ Running unit tests is as easy as executing this in the root directory of the
+-Neutron source code::
++Tacker source code::
+ 
+     tox
+ 
+@@ -120,19 +105,19 @@ the dot-separated path to the module you want as an argument to it.
+ For executing a specific test case, specify the name of the test case
+ class separating it from the module path with a colon.
+ 
+-For example, the following would run only the JSONV2TestCase tests from
+-neutron/tests/unit/test_api_v2.py::
++For example, the following would run only the TestVNFMPlugin tests from
++tacker/tests/unit/vm/test_plugin.py::
+ 
+-      $ ./run_tests.sh neutron.tests.unit.test_api_v2:JSONV2TestCase
++      $ ./run_tests.sh tacker.tests.unit.vm.test_plugin:TestVNFMPlugin
+ 
+ or::
+ 
+-      $ ./tox neutron.tests.unit.test_api_v2:JSONV2TestCase
++      $ ./tox tacker.tests.unit.vm.test_plugin:TestVNFMPlugin
+ 
+ Adding more tests
+ ~~~~~~~~~~~~~~~~~
+ 
+-Neutron has a fast growing code base and there is plenty of areas that
++Tacker has a fast growing code base and there is plenty of areas that
+ need to be covered by unit and functional tests.
+ 
+ To get a grasp of the areas where tests are needed, you can check
+@@ -159,7 +144,7 @@ after a tox run and reused for debugging::
+     $ . .tox/venv/bin/activate
+     $ python -m testtools.run [test module path]
+ 
+-Tox packages and installs the neutron source tree in a given venv
++Tox packages and installs the tacker source tree in a given venv
+ on every invocation, but if modifications need to be made between
+ invocation (e.g. adding more pdb statements), it is recommended
+ that the source tree be installed in the venv in editable mode::
+diff --git a/doc/source/conf.py b/doc/source/conf.py
+index b2f619a..6906388 100644
+--- a/doc/source/conf.py
++++ b/doc/source/conf.py
+@@ -1,6 +1,3 @@
+-# -*- coding: utf-8 -*-
+-# Copyright (c) 2010 OpenStack Foundation.
+-#
+ # Licensed under the Apache License, Version 2.0 (the "License");
+ # you may not use this file except in compliance with the License.
+ # You may obtain a copy of the License at
+@@ -14,237 +11,65 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-#
+-# Keystone documentation build configuration file, created by
+-# sphinx-quickstart on Tue May 18 13:50:15 2010.
+-#
+-# This file is execfile()'d with the current directory set to it's containing
+-# dir.
+-#
+-# Note that not all possible configuration values are present in this
+-# autogenerated file.
+-#
+-# All configuration values have a default; values that are commented out
+-# serve to show the default.
+-
+ import os
+ import sys
+ 
+-# If extensions (or modules to document with autodoc) are in another directory,
+-# add these directories to sys.path here. If the directory is relative to the
+-# documentation root, use os.path.abspath to make it absolute, like shown here.
+-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+-NEUTRON_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
+-sys.path.insert(0, NEUTRON_DIR)
+-
+-# -- General configuration ---------------------------------------------------
++sys.path.insert(0, os.path.abspath('../..'))
++# -- General configuration ----------------------------------------------------
+ 
+ # Add any Sphinx extension module names here, as strings. They can be
+ # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+-extensions = ['sphinx.ext.autodoc',
+-              'sphinx.ext.coverage',
+-              'sphinx.ext.ifconfig',
+-              'sphinx.ext.intersphinx',
+-              'sphinx.ext.pngmath',
+-              'sphinx.ext.graphviz',
+-              'sphinx.ext.todo',
+-              'oslosphinx']
+-
+-todo_include_todos = True
++extensions = [
++    'sphinx.ext.autodoc',
++    #'sphinx.ext.intersphinx',
++    'stevedore.sphinxext',
++    'oslosphinx'
++]
+ 
+-# Add any paths that contain templates here, relative to this directory.
+-templates_path = []
+-if os.getenv('HUDSON_PUBLISH_DOCS'):
+-    templates_path = ['_ga', '_templates']
+-else:
+-    templates_path = ['_templates']
++# autodoc generation is a bit aggressive and a nuisance when doing heavy
++# text edit cycles.
++# execute "export SPHINX_DEBUG=1" in your terminal to disable
+ 
+ # The suffix of source filenames.
+ source_suffix = '.rst'
+ 
+-# The encoding of source files.
+-#source_encoding = 'utf-8'
+-
+ # The master toctree document.
+ master_doc = 'index'
+ 
+ # General information about the project.
+-project = u'Neutron'
+-copyright = u'2011-present, OpenStack Foundation.'
+-
+-# The version info for the project you're documenting, acts as replacement for
+-# |version| and |release|, also used in various other places throughout the
+-# built documents.
+-#
+-# Version info
+-from neutron.version import version_info as neutron_version
+-release = neutron_version.release_string()
+-# The short X.Y version.
+-version = neutron_version.version_string()
+-
+-# The language for content autogenerated by Sphinx. Refer to documentation
+-# for a list of supported languages.
+-#language = None
+-
+-# There are two options for replacing |today|: either, you set today to some
+-# non-false value, then it is used:
+-#today = ''
+-# Else, today_fmt is used as the format for a strftime call.
+-#today_fmt = '%B %d, %Y'
+-
+-# List of documents that shouldn't be included in the build.
+-# unused_docs = []
+-
+-# List of directories, relative to source directory, that shouldn't be searched
+-# for source files.
+-exclude_trees = []
+-
+-# The reST default role (for this markup: `text`) to use for all documents.
+-#default_role = None
++project = u'tacker'
++copyright = u'2013, OpenStack Foundation'
+ 
+ # If true, '()' will be appended to :func: etc. cross-reference text.
+-#add_function_parentheses = True
++add_function_parentheses = True
+ 
+ # If true, the current module name will be prepended to all description
+ # unit titles (such as .. function::).
+-#add_module_names = True
+-
+-# If true, sectionauthor and moduleauthor directives will be shown in the
+-# output. They are ignored by default.
+-show_authors = True
++add_module_names = True
+ 
+ # The name of the Pygments (syntax highlighting) style to use.
+ pygments_style = 'sphinx'
+ 
+-# A list of ignored prefixes for module index sorting.
+-modindex_common_prefix = ['neutron.']
+-
+-# -- Options for man page output --------------------------------------------
+-
+-# Grouping the document tree for man pages.
+-# List of tuples 'sourcefile', 'target', u'title', u'Authors name', 'manual'
+-
+-man_pages = [
+-    ('man/neutron-server', 'neutron-server', u'Neutron Server',
+-     [u'OpenStack'], 1)
+-]
+-
+-
+-# -- Options for HTML output -------------------------------------------------
++# -- Options for HTML output --------------------------------------------------
+ 
+ # The theme to use for HTML and HTML Help pages.  Major themes that come with
+ # Sphinx are currently 'default' and 'sphinxdoc'.
+ # html_theme_path = ["."]
+ # html_theme = '_theme'
+-
+-# Theme options are theme-specific and customize the look and feel of a theme
+-# further.  For a list of options available for each theme, see the
+-# documentation.
+-#html_theme_options = {}
+-
+-# Add any paths that contain custom themes here, relative to this directory.
+-#html_theme_path = ['_theme']
+-
+-# The name for this set of Sphinx documents.  If None, it defaults to
+-# "<project> v<release> documentation".
+-#html_title = None
+-
+-# A shorter title for the navigation bar.  Default is the same as html_title.
+-#html_short_title = None
+-
+-# The name of an image file (relative to this directory) to place at the top
+-# of the sidebar.
+-#html_logo = None
+-
+-# The name of an image file (within the static path) to use as favicon of the
+-# docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+-# pixels large.
+-#html_favicon = None
+-
+-# Add any paths that contain custom static files (such as style sheets) here,
+-# relative to this directory. They are copied after the builtin static files,
+-# so a file named "default.css" will overwrite the builtin "default.css".
+-# html_static_path = ['_static']
+-
+-# If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
+-# using the given strftime format.
+-#html_last_updated_fmt = '%b %d, %Y'
+-git_cmd = "git log --pretty=format:'%ad, commit %h' --date=local -n1"
+-html_last_updated_fmt = os.popen(git_cmd).read()
+-
+-# If true, SmartyPants will be used to convert quotes and dashes to
+-# typographically correct entities.
+-#html_use_smartypants = True
+-
+-# Custom sidebar templates, maps document names to template names.
+-#html_sidebars = {}
+-
+-# Additional templates that should be rendered to pages, maps page names to
+-# template names.
+-#html_additional_pages = {}
+-
+-# If false, no module index is generated.
+-#html_use_modindex = True
+-
+-# If false, no index is generated.
+-#html_use_index = True
+-
+-# If true, the index is split into individual pages for each letter.
+-#html_split_index = False
+-
+-# If true, links to the reST sources are added to the pages.
+-#html_show_sourcelink = True
+-
+-# If true, an OpenSearch description file will be output, and all pages will
+-# contain a <link> tag referring to it.  The value of this option must be the
+-# base URL from which the finished HTML is served.
+-#html_use_opensearch = ''
+-
+-# If nonempty, this is the file name suffix for HTML files (e.g. ".xhtml").
+-#html_file_suffix = ''
++# html_static_path = ['static']
+ 
+ # Output file base name for HTML help builder.
+-htmlhelp_basename = 'neutrondoc'
+-
+-
+-# -- Options for LaTeX output ------------------------------------------------
+-
+-# The paper size ('letter' or 'a4').
+-#latex_paper_size = 'letter'
+-
+-# The font size ('10pt', '11pt' or '12pt').
+-#latex_font_size = '10pt'
++htmlhelp_basename = '%sdoc' % project
+ 
+ # Grouping the document tree into LaTeX files. List of tuples
+-# (source start file, target name, title, author,
+-# documentclass [howto/manual]).
++# (source start file, target name, title, author, documentclass
++# [howto/manual]).
+ latex_documents = [
+-    ('index', 'Neutron.tex', u'Neutron Documentation',
+-     u'Neutron development team', 'manual'),
++    ('index',
++     '%s.tex' % project,
++     u'%s Documentation' % project,
++     u'OpenStack Foundation', 'manual'),
+ ]
+ 
+-# The name of an image file (relative to this directory) to place at the top of
+-# the title page.
+-#latex_logo = None
+-
+-# For "manual" documents, if this is true, then toplevel headings are parts,
+-# not chapters.
+-#latex_use_parts = False
+-
+-# Additional stuff for the LaTeX preamble.
+-#latex_preamble = ''
+-
+-# Documents to append as an appendix to all manuals.
+-#latex_appendices = []
+-
+-# If false, no module index is generated.
+-#latex_use_modindex = True
+-
+ # Example configuration for intersphinx: refer to the Python standard library.
+-intersphinx_mapping = {'python': ('http://docs.python.org/', None),
+-                       'nova': ('http://nova.openstack.org', None),
+-                       'swift': ('http://swift.openstack.org', None),
+-                       'glance': ('http://glance.openstack.org', None),
+-                       'horizon': ('http://horizon.openstack.org', None),
+-                       'keystone': ('http://keystone.openstack.org', None),
+-                      }
++#intersphinx_mapping = {'http://docs.python.org/': None}
+diff --git a/doc/source/devref/api_extensions.rst b/doc/source/devref/api_extensions.rst
+index 2c8b3f6..236880a 100644
+--- a/doc/source/devref/api_extensions.rst
++++ b/doc/source/devref/api_extensions.rst
+@@ -3,8 +3,8 @@ API Extensions
+ ==============
+ 
+ API extensions is the standard way of introducing new functionality
+-to the Neutron project, it allows plugins to
+-determine if they wish to support the functionality or not.
++to the Tacker project, it allows plugins to determine if they wish
++to support the functionality or not.
+ 
+ Examples
+ ========
+@@ -15,4 +15,4 @@ by studying an existing API extension and explaining the different layers.
+ .. toctree::
+    :maxdepth: 1
+ 
+-   security_group_api
++   mano_api.rst
+diff --git a/doc/source/devref/api_layer.rst b/doc/source/devref/api_layer.rst
+index a07290b..43c9b5c 100644
+--- a/doc/source/devref/api_layer.rst
++++ b/doc/source/devref/api_layer.rst
+@@ -1,8 +1,8 @@
+ Tacker WSGI/HTTP API layer
+ ===========================
+ 
+-This section will cover the internals of Neutron's HTTP API, and the classes
+-in Neutron that can be used to create Extensions to the Neutron API.
++This section will cover the internals of Tacker's HTTP API, and the classes
++in Tacker that can be used to create Extensions to the Tacker API.
+ 
+ Python web applications interface with webservers through the Python Web
+ Server Gateway Interface (WSGI) - defined in `PEP 333 <http://legacy.python.org/dev/peps/pep-0333/>`_
+@@ -10,14 +10,14 @@ Server Gateway Interface (WSGI) - defined in `PEP 333 <http://legacy.python.org/
+ Startup
+ -------
+ 
+-Neutron's WSGI server is started from the `server module <http://git.openstack.org/cgit/openstack/neutron/tree/neutron/server/__init__.py>`_
++Tackers's WSGI server is started from the `server module <http://git.openstack.org/cgit/openstack/tacker/tree/tacker/service.py>`_
+ and the entry point `serve_wsgi` is called to build an instance of the
+-`NeutronApiService`_, which is then returned to the server module,
++`TackerApiService`_, which is then returned to the server module,
+ which spawns a `Eventlet`_ `GreenPool`_ that will run the WSGI
+ application and respond to requests from clients.
+ 
+ 
+-.. _NeutronApiService: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/service.py
++.. _TackerApiService: http://git.openstack.org/cgit/openstack/tacker/tree/tacker/service.py
+ 
+ .. _Eventlet: http://eventlet.net/
+ 
+@@ -26,7 +26,7 @@ application and respond to requests from clients.
+ WSGI Application
+ ----------------
+ 
+-During the building of the NeutronApiService, the `_run_wsgi` function
++During the building of the TackerApiService, the `_run_wsgi` function
+ creates a WSGI application using the `load_paste_app` function inside
+ `config.py`_ - which parses `api-paste.ini`_ - in order to create a WSGI app
+ using `Paste`_'s `deploy`_.
+@@ -35,15 +35,15 @@ The api-paste.ini file defines the WSGI applications and routes - using the
+ `Paste INI file format`_.
+ 
+ The INI file directs paste to instantiate the `APIRouter`_ class of
+-Neutron, which contains several methods that map Neutron resources (such as
+-Ports, Networks, Subnets) to URLs, and the controller for each resource.
++Tacker, which contains several methods that map VNFM resources (such as
++vnfd, vnf) to URLs, and the controller for each resource.
+ 
+ 
+-.. _config.py: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/common/config.py
++.. _config.py: http://git.openstack.org/cgit/openstack/tacker/tree/tacker/common/config.py
+ 
+-.. _api-paste.ini: http://git.openstack.org/cgit/openstack/neutron/tree/etc/api-paste.ini
++.. _api-paste.ini: http://git.openstack.org/cgit/openstack/tacker/tree/etc/tacker/api-paste.ini
+ 
+-.. _APIRouter: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/api/v2/router.py
++.. _APIRouter: http://git.openstack.org/cgit/openstack/tacker/tree/tacker/api/v2/router.py
+ 
+ .. _Paste: http://pythonpaste.org/
+ 
+@@ -54,4 +54,7 @@ Ports, Networks, Subnets) to URLs, and the controller for each resource.
+ Further reading
+ ---------------
+ 
++Tacker wsgi is based on neutron's extension. The following doc is still
++relevent.
++
+ `Yong Sheng Gong: Deep Dive into Neutron <http://www.slideshare.net/gongys2004/inside-neutron-2>`_
+diff --git a/doc/source/devref/common.rst b/doc/source/devref/common.rst
+deleted file mode 100644
+index 537d4c2..0000000
+--- a/doc/source/devref/common.rst
++++ /dev/null
+@@ -1,25 +0,0 @@
+-..
+-      Copyright 2010-2011 United States Government as represented by the
+-      Administrator of the National Aeronautics and Space Administration.
+-      All Rights Reserved.
+-
+-      Licensed under the Apache License, Version 2.0 (the "License"); you may
+-      not use this file except in compliance with the License. You may obtain
+-      a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-      Unless required by applicable law or agreed to in writing, software
+-      distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+-      WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+-      License for the specific language governing permissions and limitations
+-      under the License.
+-
+-Open Stack Common
+-=================
+-
+-A number of modules used are from the openstack-common project.
+-The imported files are in 'neutron/openstack-common.conf'.
+-More information can be found at `OpenStack Common`_.
+-
+-.. _`OpenStack Common`: https://launchpad.net/openstack-common
+diff --git a/doc/source/devref/db_layer.rst b/doc/source/devref/db_layer.rst
+deleted file mode 100644
+index f435e83..0000000
+--- a/doc/source/devref/db_layer.rst
++++ /dev/null
+@@ -1,2 +0,0 @@
+-Tacker Database Layer
+-======================
+diff --git a/doc/source/devref/development.environment.rst b/doc/source/devref/development.environment.rst
+index 21b90b4..6188cd7 100644
+--- a/doc/source/devref/development.environment.rst
++++ b/doc/source/devref/development.environment.rst
+@@ -1,5 +1,5 @@
+ ..
+-      Copyright 2010-2013 United States Government as represented by the
++      Copyright 2010-2015 United States Government as represented by the
+       Administrator of the National Aeronautics and Space Administration.
+       All Rights Reserved.
+ 
+@@ -19,7 +19,7 @@ Setting Up a Development Environment
+ ====================================
+ 
+ This page describes how to setup a working Python development
+-environment that can be used in developing Neutron on Ubuntu, Fedora or
++environment that can be used in developing Tacker on Ubuntu, Fedora or
+ Mac OS X. These instructions assume you're already familiar with
+ Git and Gerrit, which is a code repository mirror and code review toolset
+ , however if you aren't please see `this Git tutorial`_ for an introduction
+@@ -29,21 +29,20 @@ code contribution to Openstack projects.
+ .. _this Git tutorial: http://git-scm.com/book/en/Getting-Started
+ .. _this guide: http://docs.openstack.org/infra/manual/developers.html#development-workflow
+ 
+-Following these instructions will allow you to run the Neutron unit
+-tests. If you want to be able to run Neutron in a full OpenStack environment,
++If you want to be able to run Tacker in a full OpenStack environment,
+ you can use the excellent `DevStack`_ project to do so. There is a wiki page
+-that describes `setting up Neutron using DevStack`_.
++that describes `setting up Tacker using DevStack`_.
+ 
+ .. _DevStack: https://git.openstack.org/cgit/openstack-dev/devstack
+-.. _setting up Neutron using Devstack: https://wiki.openstack.org/wiki/NeutronDevstack
++.. _setting up Tacker using Devstack: https://wiki.openstack.org/wiki/Tacker/Installation
+ 
+ Getting the code
+ ----------------
+ 
+ Grab the code::
+ 
+-    git clone git://git.openstack.org/openstack/neutron.git
+-    cd neutron
++    git clone git://git.openstack.org/openstack/tacker.git
++    cd tacker
+ 
+ 
+ .. include:: ../../../TESTING.rst
+diff --git a/doc/source/devref/index.rst b/doc/source/devref/index.rst
+deleted file mode 100644
+index 008ad0d..0000000
+--- a/doc/source/devref/index.rst
++++ /dev/null
+@@ -1,62 +0,0 @@
+-..
+-      Copyright 2010-2011 United States Government as represented by the
+-      Administrator of the National Aeronautics and Space Administration.
+-      All Rights Reserved.
+-
+-      Licensed under the Apache License, Version 2.0 (the "License"); you may
+-      not use this file except in compliance with the License. You may obtain
+-      a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-      Unless required by applicable law or agreed to in writing, software
+-      distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+-      WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+-      License for the specific language governing permissions and limitations
+-      under the License.
+-
+-Developer Guide
+-===============
+-
+-In the Developer Guide, you will find information on Neutron's lower level
+-programming APIs. There are sections that cover the core pieces of Neutron,
+-including its database, message queue, and scheduler components. There are
+-also subsections that describe specific plugins inside Neutron.
+-
+-
+-Programming HowTos and Tutorials
+---------------------------------
+-.. toctree::
+-    :maxdepth: 3
+-
+-    development.environment
+-
+-
+-Tacker Internals
+------------------
+-.. toctree::
+-   :maxdepth: 3
+-
+-   api_layer
+-   api_extensions
+-   plugin-api
+-   db_layer
+-   rpc_api
+-
+-
+-Module Reference
+-----------------
+-.. toctree::
+-   :maxdepth: 3
+-
+-.. todo::
+-
+-    Add in all the big modules as automodule indexes.
+-
+-
+-Indices and tables
+-------------------
+-
+-* :ref:`genindex`
+-* :ref:`modindex`
+-* :ref:`search`
+diff --git a/doc/source/devref/plugin-api.rst b/doc/source/devref/plugin-api.rst
+deleted file mode 100644
+index 78df864..0000000
+--- a/doc/source/devref/plugin-api.rst
++++ /dev/null
+@@ -1,3 +0,0 @@
+-Tacker Plugin Architecture
+-===========================
+-
+diff --git a/doc/source/devref/rpc_api.rst b/doc/source/devref/rpc_api.rst
+deleted file mode 100644
+index 47104df..0000000
+--- a/doc/source/devref/rpc_api.rst
++++ /dev/null
+@@ -1,2 +0,0 @@
+-Tacker RPC API Layer
+-=====================
+diff --git a/doc/source/index.rst b/doc/source/index.rst
+index 51c63d2..a5752f3 100644
+--- a/doc/source/index.rst
++++ b/doc/source/index.rst
+@@ -1,5 +1,5 @@
+ ..
+-      Copyright 2011-2013 OpenStack Foundation
++      Copyright 2014-2015 OpenStack Foundation
+       All Rights Reserved.
+ 
+       Licensed under the Apache License, Version 2.0 (the "License"); you may
+@@ -14,47 +14,63 @@
+       License for the specific language governing permissions and limitations
+       under the License.
+ 
+-Welcome to Neutron's developer documentation!
+-=============================================
++============================================
++Welcome to Tacker's Developer Documentation!
++============================================
+ 
+-Neutron is an OpenStack project to provide "network connectivity as a service"
+-between interface devices (e.g., vNICs) managed by other OpenStack services
+-(e.g., nova). It implements the `Neutron API`_.
++Tacker is an OpenStack project which offers container orchestration engines
++for deploying and managing containers as first class resources in OpenStack.
+ 
+-.. _`Neutron API`: http://docs.openstack.org/api/openstack-network/2.0/content/
++* **Free software:** under the `Apache license <http://www.apache.org/licenses/LICENSE-2.0>`_
++* **Source:** http://git.openstack.org/cgit/openstack/tacker
++* **Blueprints:** https://blueprints.launchpad.net/tacker
++* **Bugs:** http://bugs.launchpad.net/tacker
++* **REST Client:** http://git.openstack.org/cgit/openstack/python-tackerclient
+ 
+-This document describes Neutron for contributors of the project, and assumes
+-that you are already familiar with Neutron from an `end-user perspective`_.
++Features
++========
+ 
+-.. _`end-user perspective`: http://docs.openstack.org/trunk/openstack-network/admin/content/index.html
++* VNF Catalog
++* VNFM Life Cycle Management - VNF Start/Stop
++* VNF Configuration Management Framework
++* VNF KPI Health Monitoring Framework
+ 
+-This documentation is generated by the Sphinx toolkit and lives in the source
+-tree.  Additional documentation on Neutron and other components of OpenStack
+-can be found on the `OpenStack wiki`_ and the `Neutron section of the wiki`.
+-The `Neutron Development wiki`_ is also a good resource for new contributors.
++Feature Documentation
++=====================
+ 
+-.. _`OpenStack wiki`: http://wiki.openstack.org
+-.. _`Neutron section of the wiki`: http://wiki.openstack.org/Neutron
+-.. _`Neutron Development wiki`: http://wiki.openstack.org/NeutronDevelopment
++.. toctree::
++   :maxdepth: 1
+ 
+-Enjoy!
+ 
+-Developer Docs
+-==============
++API Documentation
++=================
+ 
+ .. toctree::
+    :maxdepth: 1
+ 
+-   devref/index
++   devref/mano_api.rst
+ 
+-API Extensions
+-==============
++Development Process
++===================
+ 
+-Go to http://api.openstack.org for information about OpenStack Network API extensions.
++.. toctree::
++   :maxdepth: 1
+ 
+-Man Pages
+----------
++   policies/dev-process.rst
++
++Developer Info
++==============
+ 
+ .. toctree::
++   :maxdepth: 1
++
++   devref/development.environment.rst
++   devref/api_layer.rst
++   devref/api_extensions.rst
++
++Indices and tables
++------------------
+ 
+-    man/neutron-server
++* :ref:`genindex`
++* :ref:`modindex`
++* :ref:`search`
+diff --git a/doc/source/man/neutron-server.rst b/doc/source/man/neutron-server.rst
+deleted file mode 100644
+index ea6c4cb..0000000
+--- a/doc/source/man/neutron-server.rst
++++ /dev/null
+@@ -1,75 +0,0 @@
+-==============
+-neutron-server
+-==============
+-
+---------------
+-Neutron Server
+---------------
+-
+-:Author: openstack@lists.openstack.org
+-:Date:   2012-04-05
+-:Copyright: OpenStack Foundation
+-:Version: 2012.1
+-:Manual section: 1
+-:Manual group: cloud computing
+-
+-SYNOPSIS
+-========
+-
+-  neutron-server [options]
+-
+-DESCRIPTION
+-===========
+-
+-neutron-server provides a webserver that exposes the Neutron API, and
+-passes all webservice calls to the Neutron plugin for processing.
+-
+-OPTIONS
+-=======
+-
+-  --version             show program's version number and exit
+-  -h, --help            show this help message and exit
+-  -v, --verbose         Print more verbose output
+-  -d, --debug           Print debugging output
+-  --config-file=PATH    Path to the config file to use, for example,
+-                        /etc/neutron/neutron.conf. When not specified
+-                        (the default), we generally look at the first argument
+-                        specified to be a config file, and if that is also
+-                        missing, we search standard directories for a config
+-                        file. (/etc/neutron/,
+-                        /usr/lib/pythonX/site-packages/neutron/)
+-
+-  Logging Options:
+-    The following configuration options are specific to logging
+-    functionality for this program.
+-
+-    --log-config=PATH   If this option is specified, the logging configuration
+-                        file specified is used and overrides any other logging
+-                        options specified. Please see the Python logging
+-                        module documentation for details on logging
+-                        configuration files.
+-    --log-date-format=FORMAT
+-                        Format string for %(asctime)s in log records. Default:
+-                        %Y-%m-%d %H:%M:%S
+-    --use-syslog        Output logs to syslog.
+-    --log-file=PATH     (Optional) Name of log file to output to. If not set,
+-                        logging will go to stdout.
+-    --log-dir=LOG_DIR   (Optional) The directory to keep log files in (will be
+-                        prepended to --logfile)
+-
+-FILES
+-========
+-
+-plugins.ini file contains the plugin information
+-neutron.conf file contains configuration information in the form of python-gflags.
+-
+-SEE ALSO
+-========
+-
+-* `OpenStack Neutron <http://neutron.openstack.org>`__
+-
+-BUGS
+-====
+-
+-* Neutron is sourced in Launchpad so you can view current bugs at `OpenStack Bugs <https://bugs.launchpad.net/neutron>`__
+-
+diff --git a/test-requirements.txt b/test-requirements.txt
+index 25dd106..6f339f7 100644
+--- a/test-requirements.txt
++++ b/test-requirements.txt
+@@ -1,9 +1,16 @@
+-hacking>=0.9.2,<0.10
++# The order of packages is significant, because pip processes them in the order
++# of appearance. Changing the order has an impact on the overall integration
++# process, which may cause wedges in the gate later.
++
++# Despite above warning added by global sync process, please use
++# ascii betical order.
+ 
+ cliff>=1.10.0,<1.11.0  # Apache-2.0
+ coverage>=3.6
+ discover
++doc8 # Apache-2.0
+ fixtures>=0.3.14
++hacking>=0.9.2,<0.10
+ mock>=1.0
+ python-subunit>=0.0.18
+ ordereddict
+diff --git a/tox.ini b/tox.ini
+index 7f3a1cb..0092d09 100644
+--- a/tox.ini
++++ b/tox.ini
+@@ -2,7 +2,7 @@
+ # TODO(yamahata): enable tests of py26, py27, py33, py34.
+ # Those unit tests are temporalily disabled until its stabilization
+ #envlist = py26,py27,py33,py34,pep8
+-envlist = pep8,py27
++envlist = docs,pep8,py27
+ minversion = 1.6
+ skipsdist = True
+ 
+@@ -47,6 +47,11 @@ whitelist_externals = bash
+ [testenv:i18n]
+ commands = python ./tools/check_i18n.py ./tacker ./tools/i18n_cfg.py
+ 
++[testenv:docs]
++commands =
++    doc8 -e .rst doc/source/ CONTRIBUTING.rst HACKING.rst README.rst TESTING.rst
++    python setup.py build_sphinx
++
+ [testenv:cover]
+ commands =
+   python -m tacker.openstack.common.lockutils python setup.py testr --coverage --testr-args='{posargs}'
+-- 
+1.9.1
+
+From d4a39e96450bca3354e163f58716c538e61a657f Mon Sep 17 00:00:00 2001
+From: Sridhar Ramaswamy <srics.r@gmail.com>
+Date: Thu, 22 Oct 2015 22:37:17 +0000
+Subject: [PATCH] Move oslosphinx from test to main requirements
+
+readthedocs import requires oslosphinx to be installed.
+Hence moving it from test-requirements.txt to requirements.txt
+
+Change-Id: Ia8ed0f3c6e7f891497062cb939f266698b2f248d
+---
+ requirements.txt      | 2 +-
+ test-requirements.txt | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/requirements.txt b/requirements.txt
+index 3bf7a1e..734e924 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -13,7 +13,6 @@ requests>=2.2.0,!=2.4.0
+ iso8601>=0.1.9
+ kombu>=2.5.0
+ netaddr>=0.7.12
+-#python-tackerclient>=2.3.4,<3
+ SQLAlchemy<1.1.0,>=0.9.7
+ WebOb>=1.2.3
+ python-heatclient>=0.3.0
+@@ -24,5 +23,6 @@ stevedore>=1.5.0 # Apache-2.0
+ oslo.config>=1.11.0 # Apache-2.0
+ oslo.messaging!=1.17.0,!=1.17.1,>=1.16.0 # Apache-2.0
+ oslo.rootwrap>=2.0.0 # Apache-2.0
++oslosphinx>=2.5.0,<2.6.0  # Apache-2.0
+ python-novaclient>=2.22.0
+ tosca-parser>=0.1.0
+diff --git a/test-requirements.txt b/test-requirements.txt
+index 6f339f7..c322b4c 100644
+--- a/test-requirements.txt
++++ b/test-requirements.txt
+@@ -15,7 +15,6 @@ mock>=1.0
+ python-subunit>=0.0.18
+ ordereddict
+ sphinx>=1.1.2,!=1.2.0,!=1.3b1,<1.3
+-oslosphinx>=2.5.0,<2.6.0  # Apache-2.0
+ oslotest>=1.10.0
+ tempest-lib>=0.6.1
+ testrepository>=0.0.18
+-- 
+1.9.1
+
+From 0043b5ad722a58088fab56a31100f70c665323c6 Mon Sep 17 00:00:00 2001
+From: Martin Oemke <zeih@zeih.eu>
+Date: Wed, 10 Feb 2016 16:31:20 +0100
+Subject: [PATCH] update requirements according to global requ
+
+This patch updates the requirements in stable/liberty branch
+of tacker according to global requirements in stable/liberty
+
+Change-Id: I65a0929b4207900988bad5c15b28cde206fafcf6
+Closes-Bug: #1543396
+---
+ requirements.txt      | 30 +++++++++++++++++-------------
+ setup.py              |  3 +--
+ test-requirements.txt | 16 ++++++++--------
+ 3 files changed, 26 insertions(+), 23 deletions(-)
+
+diff --git a/requirements.txt b/requirements.txt
+index 734e924..3c5e16f 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,28 +1,32 @@
+-pbr>=0.6,!=0.7,<1.0
++# The order of packages is significant, because pip processes them in the order
++# of appearance. Changing the order has an impact on the overall integration
++# process, which may cause wedges in the gate later.
++pbr>=1.6
+ 
+ Paste
+ PasteDeploy>=1.5.0
+-Routes>=1.12.3,!=2.0
++Routes!=2.0,!=2.1,>=1.12.3;python_version=='2.7'
++Routes!=2.0,>=1.12.3;python_version!='2.7'
+ anyjson>=0.3.3
+ argparse
+ Babel>=1.3
+-eventlet>=0.16.1,!=0.17.0
++eventlet>=0.17.4
+ greenlet>=0.3.2
+ httplib2>=0.7.5
+-requests>=2.2.0,!=2.4.0
++requests!=2.8.0,!=2.9.0,>=2.5.2
+ iso8601>=0.1.9
+-kombu>=2.5.0
+-netaddr>=0.7.12
+-SQLAlchemy<1.1.0,>=0.9.7
++kombu>=3.0.7
++netaddr!=0.7.16,>=0.7.12
++SQLAlchemy<1.1.0,>=0.9.9
+ WebOb>=1.2.3
+ python-heatclient>=0.3.0
+-python-keystoneclient>=1.1.0
+-alembic>=0.7.2
++python-keystoneclient!=1.8.0,>=1.6.0
++alembic>=0.8.0
+ six>=1.9.0
+ stevedore>=1.5.0 # Apache-2.0
+-oslo.config>=1.11.0 # Apache-2.0
+-oslo.messaging!=1.17.0,!=1.17.1,>=1.16.0 # Apache-2.0
++oslo.config>=2.3.0 # Apache-2.0
++oslo.messaging!=1.17.0,!=1.17.1,!=2.6.0,!=2.6.1,!=2.7.0,!=2.8.0,!=2.8.1,!=2.9.0,!=3.1.0,>=1.16.0 # Apache-2.0
+ oslo.rootwrap>=2.0.0 # Apache-2.0
+-oslosphinx>=2.5.0,<2.6.0  # Apache-2.0
+-python-novaclient>=2.22.0
++oslosphinx>=2.5.0 # Apache-2.0
++python-novaclient!=2.33.0,>=2.28.1
+ tosca-parser>=0.1.0
+diff --git a/setup.py b/setup.py
+index 7363757..782bb21 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1,4 +1,3 @@
+-#!/usr/bin/env python
+ # Copyright (c) 2013 Hewlett-Packard Development Company, L.P.
+ #
+ # Licensed under the Apache License, Version 2.0 (the "License");
+@@ -26,5 +25,5 @@ except ImportError:
+     pass
+ 
+ setuptools.setup(
+-    setup_requires=['pbr'],
++    setup_requires=['pbr>=1.8'],
+     pbr=True)
+diff --git a/test-requirements.txt b/test-requirements.txt
+index c322b4c..65b5fbf 100644
+--- a/test-requirements.txt
++++ b/test-requirements.txt
+@@ -5,18 +5,18 @@
+ # Despite above warning added by global sync process, please use
+ # ascii betical order.
+ 
+-cliff>=1.10.0,<1.11.0  # Apache-2.0
++cliff>=1.14.0 # Apache-2.0
+ coverage>=3.6
+ discover
+ doc8 # Apache-2.0
+-fixtures>=0.3.14
+-hacking>=0.9.2,<0.10
+-mock>=1.0
++fixtures>=1.3.1
++hacking<0.10,>=0.9.2
++mock>=1.2
+ python-subunit>=0.0.18
+ ordereddict
+-sphinx>=1.1.2,!=1.2.0,!=1.3b1,<1.3
+-oslotest>=1.10.0
+-tempest-lib>=0.6.1
++sphinx!=1.2.0,!=1.3b1,<1.3,>=1.1.2
++oslotest>=1.10.0 # Apache-2.0
++tempest-lib>=0.8.0
+ testrepository>=0.0.18
+-testtools>=0.9.36,!=1.2.0
++testtools>=1.4.0
+ WebTest>=2.0
+-- 
+1.9.1
+

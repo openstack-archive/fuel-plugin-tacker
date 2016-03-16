@@ -1,0 +1,26 @@
+description "Tacker VNF Manager"
+author "Michal Skalski <mskalski@mirantis.com>"
+
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+chdir /var/run
+
+respawn
+respawn limit 20 5
+limit nofile 65535 65535
+
+pre-start script
+        for dir in run log lib cache ; do
+                mkdir -p /var/${dir}/tacker
+                chown tacker /var/${dir}/tacker
+        done
+end script
+
+script
+        [ -x "/usr/bin/tacker-server" ] || exit 0
+        DAEMON_ARGS="--verbose --log-file=/var/log/tacker/tacker-server.log"
+        exec start-stop-daemon --start --chdir /var/lib/tacker \
+                --chuid tacker:tacker --make-pidfile --pidfile /var/run/tacker/tacker-server.pid \
+                --exec /usr/bin/tacker-server -- --config-file=/etc/tacker/tacker.conf ${DAEMON_ARGS}
+end script

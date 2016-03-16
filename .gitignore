@@ -1,0 +1,6 @@
+.tox
+.build
+*.pyc
+*.deb
+*.rpm
+deployment_scripts/puppet/modules/tacker/

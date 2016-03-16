@@ -1,0 +1,88 @@
+#!/bin/bash
+set -eux
+
+BUILD_FOR=${BUILD_FOR:-ubuntu}
+
+DIR="$(dirname `readlink -f $0`)"
+TMP_DIR="${DIR}/tmp"
+MODULES="${DIR}/deployment_scripts/puppet/modules"
+
+TOSCA_PARSER=${TOSCA_PARSER:-http://mirrors.kernel.org/ubuntu/pool/universe/p/python-tosca-parser/python-tosca-parser_0.1.0-3_all.deb}
+#tacker server
+TACKER_REPO=${TACKER_REPO:-https://github.com/trozet/tacker}
+TACKER_BRANCH=${TACKER_BRANCH:-SFC_brahmaputra}
+
+TACKER_CLI_REPO=${TACKER_CLI_REPO:-https://github.com/openstack/python-tackerclient}
+TACKER_CLI_BRANCH=${TACKER_CLI_BRANCH:-stable/liberty}
+
+TACKER_HORIZON_REPO=${TACKER_HORIZON_REPO:-https://github.com/openstack/tacker-horizon}
+TACKER_HORIZON_BRANCH=${TACKER_HORIZON_BRANCH:-stable/liberty}
+
+TACKER_PUPPET_REPO=${TACKER_PUPPET_REPO:-https://github.com/radez/puppet-tacker}
+TACKER_PUPPET_BRANCH=${TACKER_PUPPET_BRANCH:-master}
+
+function cleanup {
+  rm -rf "${TMP_DIR}"
+}
+
+function download {
+  wget "$1" -qO $2
+}
+
+function build_pkg {
+  case $1 in
+    centos)
+      pushd "${DIR}/repositories/${1}/"
+      popd
+      ;;
+    ubuntu)
+      pushd "${DIR}/repositories/${1}/"
+      download $TOSCA_PARSER python-tosca-parser_0.1.0-3_all.deb
+      fpm --force -s python -t deb -m 'mskalski@mirantis.com' --deb-upstart "${DIR}/tacker_package/tacker-server" --after-install "${DIR}/tacker_package/tacker-post" --no-python-fix-name --python-install-bin /usr/bin --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/tacker/setup.py
+      fpm --force -s python -t deb -m 'mskalski@mirantis.com' --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/tacker-horizon/setup.py
+      fpm --force -s python -t deb -m 'mskalski@mirantis.com' --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/python-tackerclient/setup.py
+      popd
+      ;;
+    *) echo "Not supported system"; exit 1;;
+  esac
+}
+
+command -v fpm >/dev/null 2>&1 || { echo >&2 "fpm ruby gem required but it's not installed.  Aborting."; exit 1; }
+
+cleanup
+
+pushd $MODULES
+rm -rf tacker
+git clone $TACKER_PUPPET_REPO tacker
+pushd tacker
+git checkout $TACKER_PUPPET_BRANCH 
+popd
+popd
+
+mkdir -p "${TMP_DIR}"
+
+pushd $TMP_DIR
+
+git clone $TACKER_REPO tacker 
+pushd tacker
+git checkout $TACKER_BRANCH
+#include changes which fix dependencies for liberty
+git am < ${DIR}/tacker_package/requirements-liberty.patch
+popd
+
+git clone $TACKER_CLI_REPO python-tackerclient
+pushd python-tackerclient
+git checkout $TACKER_CLI_BRANCH
+popd
+
+git clone $TACKER_HORIZON_REPO tacker-horizon 
+pushd tacker-horizon
+git checkout $TACKER_HORIZON_BRANCH
+popd
+
+for system in $BUILD_FOR
+do
+  build_pkg $system
+done
+
+cleanup

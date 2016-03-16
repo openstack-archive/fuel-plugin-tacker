@@ -1,0 +1,23 @@
+attributes:
+  metadata:
+    group: 'openstack_services'
+    db_password:
+      generator: 'password'
+    user_password:
+      generator: 'password'
+    user: 'tacker'
+    port: 8889
+    service: 'tacker-server'
+    restrictions:
+      - condition: "settings:opendaylight == null or settings:opendaylight.metadata.enabled == false or settings:opendaylight.enable_sfc.value == false"
+        strict: false
+        message: "Please install OpenDaylight Plugin with SFC features enabled"
+      - condition: "settings:fuel-plugin-ovs == null or settings:fuel-plugin-ovs.metadata.enabled == false"
+        strict: false
+        message: "Please install and enable Openvswitch plugin with NSH support."
+  debug:
+    value: false
+    label: 'Debug logging'
+    description: 'Debug logging mode provides more information, but requires more disk space.'
+    weight: 25
+    type: "checkbox"
