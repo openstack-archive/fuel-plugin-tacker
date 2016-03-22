@@ -9,11 +9,11 @@ MODULES="${DIR}/deployment_scripts/puppet/modules"
 
 TOSCA_PARSER=${TOSCA_PARSER:-http://mirrors.kernel.org/ubuntu/pool/universe/p/python-tosca-parser/python-tosca-parser_0.1.0-3_all.deb}
 #tacker server
-TACKER_REPO=${TACKER_REPO:-https://github.com/trozet/tacker}
-TACKER_BRANCH=${TACKER_BRANCH:-SFC_brahmaputra}
+TACKER_REPO=${TACKER_REPO:-https://github.com/michalskalski/tacker}
+TACKER_BRANCH=${TACKER_BRANCH:-liberty-sfc}
 
-TACKER_CLI_REPO=${TACKER_CLI_REPO:-https://github.com/openstack/python-tackerclient}
-TACKER_CLI_BRANCH=${TACKER_CLI_BRANCH:-stable/liberty}
+TACKER_CLI_REPO=${TACKER_CLI_REPO:-https://github.com/michalskalski/python-tackerclient}
+TACKER_CLI_BRANCH=${TACKER_CLI_BRANCH:-liberty-sfc}
 
 TACKER_HORIZON_REPO=${TACKER_HORIZON_REPO:-https://github.com/openstack/tacker-horizon}
 TACKER_HORIZON_BRANCH=${TACKER_HORIZON_BRANCH:-stable/liberty}
@@ -66,8 +66,6 @@ pushd $TMP_DIR
 git clone $TACKER_REPO tacker 
 pushd tacker
 git checkout $TACKER_BRANCH
-#include changes which fix dependencies for liberty
-git am < ${DIR}/tacker_package/requirements-liberty.patch
 popd
 
 git clone $TACKER_CLI_REPO python-tackerclient
