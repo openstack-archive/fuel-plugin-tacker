@@ -15,6 +15,7 @@ pre-start script
                 mkdir -p /var/${dir}/tacker
                 chown tacker /var/${dir}/tacker
         done
+        chmod 700 /var/cache/tacker
 end script
 
 script
