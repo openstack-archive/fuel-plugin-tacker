@@ -22,7 +22,7 @@ $allowed_hosts = [ 'localhost', '127.0.0.1', '%' ]
 validate_string($mysql_root_user)
 validate_string($database_vip)
 
-class { 'galera::client':
+class { '::openstack::galera::client':
   custom_setup_class => hiera('mysql_custom_setup_class', 'galera'),
 }
 
@@ -33,14 +33,14 @@ class { 'tacker::db::mysql':
   allowed_hosts => $allowed_hosts,
 }
 
-class { 'osnailyfacter::mysql_access':
+class { '::osnailyfacter::mysql_access':
   db_host     => $db_host,
   db_user     => $db_root_user,
   db_password => $db_root_password,
 }
 
-Class['galera::client'] ->
-  Class['osnailyfacter::mysql_access'] ->
+Class['::openstack::galera::client'] ->
+  Class['::osnailyfacter::mysql_access'] ->
     Class['tacker::db::mysql']
 
 class mysql::config {}

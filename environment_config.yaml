@@ -12,9 +12,6 @@ attributes:
       - condition: "settings:opendaylight == null or settings:opendaylight.metadata.enabled == false or settings:opendaylight.enable_sfc.value == false"
         strict: false
         message: "Please install OpenDaylight Plugin with SFC features enabled"
-      - condition: "settings:fuel-plugin-ovs == null or settings:fuel-plugin-ovs.metadata.enabled == false"
-        strict: false
-        message: "Please install and enable Openvswitch plugin with NSH support."
   debug:
     value: false
     label: 'Debug logging'

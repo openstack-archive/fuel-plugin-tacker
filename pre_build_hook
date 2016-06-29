@@ -7,19 +7,24 @@ DIR="$(dirname `readlink -f $0`)"
 TMP_DIR="${DIR}/tmp"
 MODULES="${DIR}/deployment_scripts/puppet/modules"
 
-TOSCA_PARSER=${TOSCA_PARSER:-http://mirrors.kernel.org/ubuntu/pool/universe/p/python-tosca-parser/python-tosca-parser_0.1.0-3_all.deb}
-#tacker server
-TACKER_REPO=${TACKER_REPO:-https://github.com/michalskalski/tacker}
-TACKER_BRANCH=${TACKER_BRANCH:-liberty-sfc}
+TOSCA_PARSER=${TOSCA_PARSER:-https://github.com/openstack/tosca-parser}
+TOSCA_PARSER_BRANCH=${TOSCA_PARSER_BRANCH:-0.4.0}
 
-TACKER_CLI_REPO=${TACKER_CLI_REPO:-https://github.com/michalskalski/python-tackerclient}
-TACKER_CLI_BRANCH=${TACKER_CLI_BRANCH:-liberty-sfc}
+HEAT_TRANSLATOR=${HEAT_TRANSLATOR:-https://github.com/openstack/heat-translator}
+HEAT_TRANSLATOR_BRANCH=${HEAT_TRANSLATOR_BRANCH:-0.4.0}
+
+#tacker server
+TACKER_REPO=${TACKER_REPO:-https://github.com/openstack/tacker}
+TACKER_BRANCH=${TACKER_BRANCH:-stable/mitaka}
+
+TACKER_CLI_REPO=${TACKER_CLI_REPO:-https://github.com/openstack/python-tackerclient}
+TACKER_CLI_BRANCH=${TACKER_CLI_BRANCH:-stable/mitaka}
 
 TACKER_HORIZON_REPO=${TACKER_HORIZON_REPO:-https://github.com/openstack/tacker-horizon}
-TACKER_HORIZON_BRANCH=${TACKER_HORIZON_BRANCH:-stable/liberty}
+TACKER_HORIZON_BRANCH=${TACKER_HORIZON_BRANCH:-stable/mitaka}
 
-TACKER_PUPPET_REPO=${TACKER_PUPPET_REPO:-https://github.com/radez/puppet-tacker}
-TACKER_PUPPET_BRANCH=${TACKER_PUPPET_BRANCH:-master}
+TACKER_PUPPET_REPO=${TACKER_PUPPET_REPO:-https://github.com/openstack/puppet-tacker}
+TACKER_PUPPET_BRANCH=${TACKER_PUPPET_BRANCH:-6934f153abaee177d89b3304e251e714fc333b92}
 
 function cleanup {
   rm -rf "${TMP_DIR}"
@@ -37,14 +42,26 @@ function build_pkg {
       ;;
     ubuntu)
       pushd "${DIR}/repositories/${1}/"
-      download $TOSCA_PARSER python-tosca-parser_0.1.0-3_all.deb
       fpm --force -s python -t deb -m 'mskalski@mirantis.com' --deb-upstart "${DIR}/tacker_package/tacker-server" --after-install "${DIR}/tacker_package/tacker-post" --no-python-fix-name --python-install-bin /usr/bin --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/tacker/setup.py
       fpm --force -s python -t deb -m 'mskalski@mirantis.com' --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/tacker-horizon/setup.py
-      fpm --force -s python -t deb -m 'mskalski@mirantis.com' --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/python-tackerclient/setup.py
+      fpm --force -s python -t deb -m 'mskalski@mirantis.com' --python-install-bin /usr/bin --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/python-tackerclient/setup.py
+      fpm --force -s python -t deb -m 'mskalski@mirantis.com' --python-install-bin /usr/bin --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/tosca-parser/setup.py
+      fpm --force -s python -t deb -m 'mskalski@mirantis.com' --python-install-bin /usr/bin --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/heat-translator/setup.py
       popd
       ;;
     *) echo "Not supported system"; exit 1;;
   esac
+}
+
+function clone () {
+  git clone $1 $3
+  pushd $3
+  git checkout $2
+  popd
+}
+
+function patch_req () {
+  sed -i -e "s/${2}/${3}/" "${TMP_DIR}/${1}/requirements.txt"
 }
 
 command -v fpm >/dev/null 2>&1 || { echo >&2 "fpm ruby gem required but it's not installed.  Aborting."; exit 1; }
@@ -53,30 +70,32 @@ cleanup
 
 pushd $MODULES
 rm -rf tacker
-git clone $TACKER_PUPPET_REPO tacker
-pushd tacker
-git checkout $TACKER_PUPPET_BRANCH 
-popd
+clone $TACKER_PUPPET_REPO $TACKER_PUPPET_BRANCH "tacker"
 popd
 
 mkdir -p "${TMP_DIR}"
 
 pushd $TMP_DIR
 
-git clone $TACKER_REPO tacker 
-pushd tacker
-git checkout $TACKER_BRANCH
-popd
+clone $TACKER_REPO $TACKER_BRANCH "tacker"
+clone $TACKER_CLI_REPO $TACKER_CLI_BRANCH "python-tackerclient"
+clone $TACKER_HORIZON_REPO $TACKER_HORIZON_BRANCH "tacker-horizon"
+clone $TOSCA_PARSER $TOSCA_PARSER_BRANCH "tosca-parser"
+clone $HEAT_TRANSLATOR $HEAT_TRANSLATOR_BRANCH "heat-translator"
 
-git clone $TACKER_CLI_REPO python-tackerclient
-pushd python-tackerclient
-git checkout $TACKER_CLI_BRANCH
-popd
+patch_req "tosca-parser" "PyYAML" "python-yaml"
+patch_req "heat-translator" "PyYAML" "python-yaml"
 
-git clone $TACKER_HORIZON_REPO tacker-horizon 
-pushd tacker-horizon
-git checkout $TACKER_HORIZON_BRANCH
-popd
+if [ "$TACKER_BRANCH" = "stable/mitaka" ];
+then
+  sed -i -e "/^python-keystoneclient/ s/<3.0.0,//" "${TMP_DIR}/tacker/requirements.txt"
+fi
+
+if [ "$TACKER_CLI_BRANCH" = "stable/mitaka" ];
+then
+  sed -i -e "/^python-keystoneclient/ s/<3.0.0,//" "${TMP_DIR}/python-tackerclient/requirements.txt"
+fi
+
 
 for system in $BUILD_FOR
 do
