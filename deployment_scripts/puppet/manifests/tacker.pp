@@ -1,6 +1,7 @@
 notice('MODULAR: tacker.pp')
 
-$management_vip      = hiera('management_vip')
+$management_vip = hiera('management_vip')
+$public_vip     = hiera('public_vip')
 $network_scheme = hiera_hash('network_scheme', {})
 prepare_network_config($network_scheme)
 
@@ -16,16 +17,17 @@ $service_name = pick($tacker_hash['service'], 'tacker-server')
 
 $tacker_tenant        = pick($tacker_hash['tenant'], 'services')
 $tacker_user          = pick($tacker_hash['user'], 'tacker')
-$tacker_user_password = $tacker_hash['user_password']
+$tacker_user_password = pick($tacker_hash['user'], 'tacker')
 
 $ssl_hash               = hiera_hash('use_ssl', {})
-$internal_auth_protocol = get_ssl_property($ssl_hash, {}, 'keystone', 'internal', 'protocol', 'http')
-$internal_auth_address  = get_ssl_property($ssl_hash, {}, 'keystone', 'internal', 'hostname', [hiera('service_endpoint', ''), $management_vip])
+$public_auth_protocol = get_ssl_property($ssl_hash, {}, 'keystone', 'public', 'protocol', 'http')
+$public_auth_address  = get_ssl_property($ssl_hash, {}, 'keystone', 'public', 'hostname', $public_vip)
 $admin_auth_protocol    = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'protocol', 'http')
-$admin_auth_address     = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'hostname', [hiera('service_endpoint', ''), $management_vip])
+$admin_auth_address     = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'hostname', $management_vip)
 
-$auth_uri     = "${internal_auth_protocol}://${internal_auth_address}:5000/v2.0/"
+$auth_uri     = "${public_auth_protocol}://${public_auth_address}:5000/v2.0/"
 $identity_uri = "${admin_auth_protocol}://${admin_auth_address}:35357/"
+$heat_uri     = "${admin_auth_protocol}://${admin_auth_address}:8004/v1"
 
 $database_vip = hiera('database_vip', undef)
 $db_type      = 'mysql'
@@ -43,7 +45,7 @@ $db_connection = os_database_connection({
   'charset'  => 'utf8'
 })
 
-$rabbit_hash        = hiera_hash('rabbit_hash', {})
+$rabbit_hash        = hiera_hash('rabbit', {})
 $rabbit_hosts       = split(hiera('amqp_hosts',''), ',')
 $rabbit_password    = $rabbit_hash['password']
 $rabbit_userid      = $rabbit_hash['user']
@@ -64,4 +66,6 @@ class { 'tacker':
   debug               => $debug,
   opendaylight_host   => $management_vip,
   opendaylight_port   => $odl_port,
+  heat_uri            => $heat_uri,
 }
+
