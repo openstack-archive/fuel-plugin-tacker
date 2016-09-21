@@ -1,3 +1,13 @@
+- id: tacker-db-sql
+  role: [primary-controller]
+  required_for: [tacker-db]
+  requires: [primary-database, database]
+  type: shell
+  cross-depends:
+    - name: /(primary-)?database/
+  parameters:
+    cmd: bash install_packages.sh
+    timeout: 180
 - id: tacker
   type: group
   role: [tacker]
@@ -56,3 +66,14 @@
     puppet_manifest: puppet/manifests/haproxy.pp
     puppet_modules: puppet/modules:/etc/puppet/modules
     timeout: 300
+- id: tacker-tackerc
+  role: [primary-controller]
+  required_for: [deploy_end]
+  requires: [primary-database, database,heat]
+  type: shell
+  cross-depends:
+    - name: /(primary-)?database/
+  parameters:
+    cmd: bash create_tackerc.sh
+    timeout: 180
+
