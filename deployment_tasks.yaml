@@ -1,13 +1,3 @@
-- id: tacker-db-sql
-  role: [primary-controller]
-  required_for: [tacker-db]
-  requires: [primary-database, database]
-  type: shell
-  cross-depends:
-    - name: /(primary-)?database/
-  parameters:
-    cmd: bash install_packages.sh
-    timeout: 180
 - id: tacker
   type: group
   role: [tacker]
