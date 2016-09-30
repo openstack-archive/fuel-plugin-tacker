@@ -8,7 +8,7 @@ $public_vip          = hiera('public_vip')
 $public_ssl_hash     = hiera_hash('public_ssl')
 $management_vip      = hiera('management_vip')
 $region              = pick($tacker_hash['region'], hiera('region', 'RegionOne'))
-$password            = pick($tacker_hash['auth_name'], 'tacker')
+$password            = $tacker_hash['user_password']
 $auth_name           = pick($tacker_hash['auth_name'], 'tacker')
 $configure_endpoint  = pick($tacker_hash['configure_endpoint'], true)
 $configure_user      = pick($tacker_hash['configure_user'], true)
@@ -44,4 +44,3 @@ class { 'tacker::keystone::auth':
   public_url          => $public_url,
   region              => $region,
 }
-

@@ -56,14 +56,15 @@
     puppet_manifest: puppet/manifests/haproxy.pp
     puppet_modules: puppet/modules:/etc/puppet/modules
     timeout: 300
-- id: tacker-tackerc
-  role: [primary-controller]
+- id: tacker-rc
+  groups: [primary-controller, controller]
   required_for: [deploy_end]
-  requires: [primary-database, database,heat]
-  type: shell
+  requires: [tacker-install]
+  type: puppet
+  version: 2.0.0
   cross-depends:
-    - name: /(primary-)?database/
+    - name: tacker-install
   parameters:
-    cmd: bash create_tackerc.sh
+    puppet_manifest: puppet/manifests/tacker_rc.pp
+    puppet_modules: puppet/modules:/etc/puppet/modules
     timeout: 180
-

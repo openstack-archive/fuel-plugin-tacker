@@ -17,11 +17,11 @@ $service_name = pick($tacker_hash['service'], 'tacker-server')
 
 $tacker_tenant        = pick($tacker_hash['tenant'], 'services')
 $tacker_user          = pick($tacker_hash['user'], 'tacker')
-$tacker_user_password = pick($tacker_hash['user'], 'tacker')
+$tacker_user_password = $tacker_hash['user_password']
 
 $ssl_hash               = hiera_hash('use_ssl', {})
-$public_auth_protocol = get_ssl_property($ssl_hash, {}, 'keystone', 'public', 'protocol', 'http')
-$public_auth_address  = get_ssl_property($ssl_hash, {}, 'keystone', 'public', 'hostname', $public_vip)
+$public_auth_protocol   = get_ssl_property($ssl_hash, {}, 'keystone', 'public', 'protocol', 'http')
+$public_auth_address    = get_ssl_property($ssl_hash, {}, 'keystone', 'public', 'hostname', $public_vip)
 $admin_auth_protocol    = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'protocol', 'http')
 $admin_auth_address     = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'hostname', $management_vip)
 
@@ -68,4 +68,3 @@ class { 'tacker':
   opendaylight_port   => $odl_port,
   heat_uri            => $heat_uri,
 }
-
