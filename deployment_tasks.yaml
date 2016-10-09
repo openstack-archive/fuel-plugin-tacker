@@ -1,7 +1,7 @@
 - id: tacker
   type: group
   role: [tacker]
-  requires: [deploy_start, primary-controller]
+  requires: [deploy_start, primary-controller,controller]
   required_for: [deploy_end]
   tasks: [hiera, globals, tools, logging, netconfig, hosts, deploy_start]
   parameters:
@@ -10,9 +10,9 @@
 - id: tacker-install
   type: puppet
   version: 2.0.0
-  groups: [tacker]
+  groups: [primary-controller,controller]
   required_for: [deploy_end]
-  requires: [openstack-haproxy, primary-database, primary-controller]
+  requires: [openstack-haproxy, primary-database, primary-controller,controller]
   cross-depends:
     - name: tacker-db
     - name: tacker-keystone
