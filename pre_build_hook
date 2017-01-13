@@ -9,10 +9,10 @@ MODULES="${DIR}/deployment_scripts/puppet/modules"
 
 TOSCA_PARSER=${TOSCA_PARSER:-http://mirrors.kernel.org/ubuntu/pool/universe/p/python-tosca-parser/python-tosca-parser_0.1.0-3_all.deb}
 #tacker server
-TACKER_REPO=${TACKER_REPO:-https://github.com/VeenaSL/tacker}
+TACKER_REPO=${TACKER_REPO:-https://github.com/trozet/tacker.git}
 TACKER_BRANCH=${TACKER_BRANCH:-SFC_colorado}
 
-TACKER_CLI_REPO=${TACKER_CLI_REPO:-https://github.com/VeenaSL/python-tackerclient}
+TACKER_CLI_REPO=${TACKER_CLI_REPO:-https://github.com/trozet/python-tackerclient.git}
 TACKER_CLI_BRANCH=${TACKER_CLI_BRANCH:-SFC_refactor}
 
 TACKER_HORIZON_REPO=${TACKER_HORIZON_REPO:-https://github.com/openstack/tacker-horizon}
