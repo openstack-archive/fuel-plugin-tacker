@@ -15,11 +15,11 @@ TACKER_BRANCH=${TACKER_BRANCH:-SFC_colorado}
 TACKER_CLI_REPO=${TACKER_CLI_REPO:-https://github.com/trozet/python-tackerclient.git}
 TACKER_CLI_BRANCH=${TACKER_CLI_BRANCH:-SFC_refactor}
 
-TACKER_HORIZON_REPO=${TACKER_HORIZON_REPO:-https://github.com/openstack/tacker-horizon}
-TACKER_HORIZON_BRANCH=${TACKER_HORIZON_BRANCH:-stable/mitaka}
+TACKER_HORIZON_REPO=${TACKER_HORIZON_REPO:-https://github.com/openstack/tacker-horizon.git}
+TACKER_HORIZON_BRANCH=${TACKER_HORIZON_BRANCH:-master}
 
-TACKER_PUPPET_REPO=${TACKER_PUPPET_REPO:-https://github.com/trozet/puppet-tacker}
-TACKER_PUPPET_BRANCH=${TACKER_PUPPET_BRANCH:-fix_db_sync}
+TACKER_PUPPET_REPO=${TACKER_PUPPET_REPO:-https://github.com/openstack/puppet-tacker.git}
+TACKER_PUPPET_BRANCH=${TACKER_PUPPET_BRANCH:-master}
 
 function cleanup {
   rm -rf "${TMP_DIR}"
