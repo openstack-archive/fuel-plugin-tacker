@@ -1,6 +1,31 @@
 #!/bin/sh
-set -e
+set -uxe
 
-adduser --quiet --system --group --no-create-home --home /var/lib/tacker tacker
+adduser --quiet --system --group --home /var/lib/tacker tacker
+mkdir -p /var/lib/tacker/systemd
+
+cat > /var/lib/tacker/systemd/tacker-pre-service <<EOF
+#!/bin/sh
+for dir in run log lib cache ; do
+        mkdir -p /var/\${dir}/tacker
+        chown tacker /var/\${dir}/tacker
+done
+chmod 700 /var/cache/tacker
+EOF
+
+cat > /var/lib/tacker/systemd/tacker-run-service << EOF
+#!/bin/sh
+[ -x "/usr/bin/tacker-server" ] || exit 0
+DAEMON_ARGS="--verbose --log-file=/var/log/tacker/tacker-server.log"
+exec start-stop-daemon --start --chdir /var/lib/tacker \
+        --chuid tacker:tacker --make-pidfile --pidfile /var/run/tacker/tacker-server.pid \
+        --exec /usr/bin/tacker-server -- --config-file=/etc/tacker/tacker.conf \${DAEMON_ARGS}
+
+EOF
+
+chmod +x /var/lib/tacker/systemd/tacker-pre-service
+chmod +x /var/lib/tacker/systemd/tacker-run-service
+
 mv /usr/local/etc/tacker /etc/
 chown -R tacker:tacker /etc/tacker
+

@@ -38,7 +38,7 @@ function build_pkg {
     ubuntu)
       pushd "${DIR}/repositories/${1}/"
       download $TOSCA_PARSER python-tosca-parser_0.1.0-3_all.deb
-      fpm --force -s python -t deb --deb-upstart "${DIR}/tacker_package/tacker-server" --after-install "${DIR}/tacker_package/tacker-post" --no-python-fix-name --python-install-bin /usr/bin --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/tacker/setup.py
+      fpm --force -s python -t deb --deb-systemd "${DIR}/tacker_package/systemd/tacker-server" --after-install "${DIR}/tacker_package/tacker-post" --no-python-fix-name --python-install-bin /usr/bin --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/tacker/setup.py
       fpm --force -s python -t deb --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/tacker-horizon/setup.py
       fpm --force -s python -t deb --python-install-lib /usr/lib/python2.7/dist-packages ${TMP_DIR}/python-tackerclient/setup.py
       popd
