@@ -62,6 +62,7 @@ class { 'tacker':
   rabbit_userid       => $rabbit_userid,
   bind_port           => $bind_port,
   bind_host           => $bind_host,
+  service_provider    => 'systemd',
   service_name        => $service_name,
   debug               => $debug,
   opendaylight_host   => $management_vip,
