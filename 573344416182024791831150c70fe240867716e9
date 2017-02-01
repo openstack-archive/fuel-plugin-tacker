@@ -1,0 +1,14 @@
+Code-Review+1: Michael Polenchuk <mpolenchuk@mirantis.com>
+Code-Review+1: vijayendra radhakrishna <vradhakrishna@mvista.com>
+Code-Review+1: Alexandru Avadanii <alexandru.avadanii@enea.com>
+Code-Review+1: veena <mveenasl@gmail.com>
+Code-Review+1: Aimee Ukasick <aimeeu.opensource@gmail.com>
+Code-Review+1: Serg Melikyan <smelikyan@mirantis.com>
+Code-Review+2: Michal Skalski <mskalski@mirantis.com>
+Workflow+1: Michal Skalski <mskalski@mirantis.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 01 Feb 2017 16:40:40 +0000
+Reviewed-on: https://review.openstack.org/427194
+Project: openstack/fuel-plugin-tacker
+Branch: refs/heads/master
