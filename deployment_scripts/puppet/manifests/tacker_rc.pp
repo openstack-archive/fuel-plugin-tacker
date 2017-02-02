@@ -11,7 +11,7 @@ $tacker_user_password = $tacker_hash['user_password']
 $ssl_hash               = hiera_hash('use_ssl', {})
 $public_auth_protocol   = get_ssl_property($ssl_hash, {}, 'keystone', 'public', 'protocol', 'http')
 $public_auth_address    = get_ssl_property($ssl_hash, {}, 'keystone', 'public', 'hostname', $public_vip)
-$auth_uri               = "${public_auth_protocol}://${public_auth_address}:5000/v2.0/"
+$auth_uri               = "${public_auth_protocol}://${public_auth_address}:5000/v3/"
 
 $tackerc = inline_template("
 #!/bin/sh

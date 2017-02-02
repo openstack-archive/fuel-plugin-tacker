@@ -25,7 +25,7 @@ $public_auth_address    = get_ssl_property($ssl_hash, {}, 'keystone', 'public', 
 $admin_auth_protocol    = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'protocol', 'http')
 $admin_auth_address     = get_ssl_property($ssl_hash, {}, 'keystone', 'admin', 'hostname', $management_vip)
 
-$auth_uri     = "${public_auth_protocol}://${public_auth_address}:5000/v2.0/"
+$auth_uri     = "${public_auth_protocol}://${public_auth_address}:5000/v3/"
 $identity_uri = "${admin_auth_protocol}://${admin_auth_address}:35357/"
 $heat_uri     = "${admin_auth_protocol}://${admin_auth_address}:8004/v1"
 
