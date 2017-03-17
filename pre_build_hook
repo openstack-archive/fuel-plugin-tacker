@@ -9,17 +9,18 @@ MODULES="${DIR}/deployment_scripts/puppet/modules"
 
 TOSCA_PARSER=${TOSCA_PARSER:-http://mirrors.kernel.org/ubuntu/pool/universe/p/python-tosca-parser/python-tosca-parser_0.1.0-3_all.deb}
 #tacker server
+# invalidate cache
 TACKER_REPO=${TACKER_REPO:-https://github.com/trozet/tacker.git}
-TACKER_BRANCH=${TACKER_BRANCH:-SFC_colorado}
+TACKER_COMMIT=${TACKER_COMMIT:-ebdd06da78c07d22154f28eda8cb3124e347c91b}
 
 TACKER_CLI_REPO=${TACKER_CLI_REPO:-https://github.com/trozet/python-tackerclient.git}
-TACKER_CLI_BRANCH=${TACKER_CLI_BRANCH:-SFC_refactor}
+TACKER_CLI_COMMIT=${TACKER_CLI_COMMIT:-9bfd9fdde6a2a85a6575b1b6de0921fa033d8665}
 
 TACKER_HORIZON_REPO=${TACKER_HORIZON_REPO:-https://github.com/openstack/tacker-horizon}
 TACKER_HORIZON_BRANCH=${TACKER_HORIZON_BRANCH:-stable/mitaka}
 
 TACKER_PUPPET_REPO=${TACKER_PUPPET_REPO:-https://github.com/trozet/puppet-tacker}
-TACKER_PUPPET_BRANCH=${TACKER_PUPPET_BRANCH:-fix_db_sync}
+TACKER_PUPPET_COMMIT=${TACKER_PUPPET_COMMIT:-8d417dd34a0e624b10fdf06bf1adcda39d1fe2dd}
 
 function cleanup {
   rm -rf "${TMP_DIR}"
@@ -55,7 +56,7 @@ pushd $MODULES
 rm -rf tacker
 git clone $TACKER_PUPPET_REPO tacker
 pushd tacker
-git checkout $TACKER_PUPPET_BRANCH
+git checkout $TACKER_PUPPET_COMMIT
 popd
 popd
 
@@ -65,12 +66,12 @@ pushd $TMP_DIR
 
 git clone $TACKER_REPO tacker
 pushd tacker
-git checkout $TACKER_BRANCH
+git checkout $TACKER_COMMIT
 popd
 
 git clone $TACKER_CLI_REPO python-tackerclient
 pushd python-tackerclient
-git checkout $TACKER_CLI_BRANCH
+git checkout $TACKER_CLI_COMMIT
 popd
 
 git clone $TACKER_HORIZON_REPO tacker-horizon
