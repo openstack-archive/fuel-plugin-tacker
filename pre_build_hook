@@ -9,6 +9,7 @@ MODULES="${DIR}/deployment_scripts/puppet/modules"
 
 TOSCA_PARSER=${TOSCA_PARSER:-http://mirrors.kernel.org/ubuntu/pool/universe/p/python-tosca-parser/python-tosca-parser_0.1.0-3_all.deb}
 #tacker server
+# invalidate cache
 TACKER_REPO=${TACKER_REPO:-https://github.com/trozet/tacker.git}
 TACKER_BRANCH=${TACKER_BRANCH:-SFC_colorado}
 
