@@ -1,9 +1,0 @@
-tacker:
-  name: "Tacker VNF manager"
-  description: "Install Tacker VNF manager"
-  has_primary: false                # whether has primary role or not
-  public_ip_required: false         # whether requires public net or not
-  weight: 150                       # weight that will be used for ordering on fuel ui
-  limits:
-    max: 1
-    min: 1
